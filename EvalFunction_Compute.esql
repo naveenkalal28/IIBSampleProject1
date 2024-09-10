@@ -1,0 +1,46 @@
+
+
+DECLARE FieldName CHARACTER;
+DECLARE OperationType CHARACTER;
+DECLARE Result INTEGER;
+CREATE COMPUTE MODULE EvalFunction_Compute
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyEntireMessage();
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+/*
+<Order>
+  <OperationType>Multiply</OperationType>
+  <Amount1>10</Amount1>
+  <Amount2>20</Amount2>
+  <Amount3>30</Amount3>
+</Order>
+*/
+
+-- Get the operation type from the input message
+SET OperationType = InputRoot.XMLNSC.Order.OperationType;
+
+-- Determine which field to use based on some dynamic condition
+-- In this case, let's say we choose the field based on an external factor
+-- (For simplicity, let's assume we're choosing Amount2 for this example)
+SET FieldName = InputRoot.XMLNSC.Order.Amount2;
+
+-- Construct the dynamic expression for EVAL
+DECLARE DynamicExpression CHARACTER;
+SET DynamicExpression = 
+    CASE 
+        WHEN OperationType = 'Multiply' THEN FieldName || ' * 2'
+        WHEN OperationType = 'Add' THEN FieldName || ' + 10'
+        ELSE FieldName
+    END;
+
+-- Execute the dynamic expression using EVAL
+SET Result =EVAL(DynamicExpression);
+
+
+Set OutputRoot.XMLNSC.Data.a=Result;
+	END;
+END MODULE;
